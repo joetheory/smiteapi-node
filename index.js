@@ -9,8 +9,8 @@ var session 	=	null;
 
 //Establish config
 var config = {
-    devId: '1063',
-    authKey: '34F03C32BCF246159E80350672E3D6BE'
+    devId: '',
+    authKey: ''
 };
 
 
