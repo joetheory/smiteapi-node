@@ -1,4 +1,6 @@
 {
-    "devId": "xxxx",
-    "authKey": "xxxx"
+	"apiHost"	: "http://api.smitegame.com/smiteapi.svc/",
+    "devId"		: "xxxx",
+    "authKey"	: "xxxx",
+    "format"	: "json"
 }

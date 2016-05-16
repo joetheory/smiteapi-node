@@ -2,32 +2,42 @@ var md5 		= require('md5');
 var moment 		= require('moment');
 var http 		= require('http');
 
-var apiUrlBase 	= 'http://api.smitegame.com/smiteapi.svc/';
 var Config = require("./config.json");
 
-var session = generateSession();
-
-function generateSession() {
-
-	var devId = Config.devId;
-    var authKey = Config.authKey;
-    var utcTime = new moment().utc().format("YYYYMMDDHHmmss");
-    var authHash = md5(devId + "createsession" + authKey + utcTime);
-    var baseUrl = 'http://api.smitegame.com/smiteapi.svc/createsessionjson/';
-    var sessionUrl = baseUrl + devId + '/' + authHash + '/' + utcTime;
-
-    var test = http.get(sessionUrl, function(response) {
-        // Continuously update stream with data
-        var body = '';
-        response.on('data', function(d) {
-            body += d;
-        });
-        response.on('end', function() {
-            // Data reception is done, do whatever with it!
-            var sessionObj = JSON.parse(body);
-            console.log(sessionObj);
-	    });
-	});
-
-	return test;
+function createCall(method, isSession) {
+	// Get the current time for the call
+	var utcTime = new moment().utc().format("YYYYMMDDHHmmss");
+	// Create the stupid hash
+	var authHash = md5(Config.devId + method + Config.authKey + utcTime);
+	if (isSession) {
+		//createsession[ResponseFormat]/{developerId}/{signature}/{timestamp}
+		var callAddress = Config.apiHost + method + Config.format + '/' + Config.devId + '/' + authHash + '/' + utcTime;
+	} else {
+		//getdataused[ResponseFormat]/{developerId}/{signature}/{session}/{timestamp}
+		var callAddress = Config.apiHost + method + Config.format + '/' + Config.devId + '/' + authHash + '/' + session + '/' + utcTime;
+	}
+	console.log(callAddress);
+	return callAddress;
 }
+
+function makeCall(callAddress) {
+	http.get(callAddress, function(res){
+        var body = '';
+        res
+            .on('data', function(chunk){
+                body += chunk;
+                }
+            )
+            .on('end', function(){
+                    console.log('body data: ' + body);
+            }
+        );
+        
+    }).on('error', function(error){
+        console.error(error);
+    });
+
+}
+
+var callAddress = createCall('createsession',true);
+var call = makeCall(callAddress);
