@@ -16,7 +16,7 @@ function createCall(method, isSession) {
 		//getdataused[ResponseFormat]/{developerId}/{signature}/{session}/{timestamp}
 		var callAddress = Config.apiHost + method + Config.format + '/' + Config.devId + '/' + authHash + '/' + session + '/' + utcTime;
 	}
-	console.log(callAddress);
+	//console.log(callAddress);
 	return callAddress;
 }
 
@@ -24,20 +24,17 @@ function makeCall(callAddress) {
 	http.get(callAddress, function(res){
         var body = '';
         res
-            .on('data', function(chunk){
-                body += chunk;
-                }
-            )
+        	.on('data', function(chunk){
+            	body += chunk;
+            })
             .on('end', function(){
-                    console.log('body data: ' + body);
-            }
-        );
+            	console.log(body);
+            });
         
-    }).on('error', function(error){
-        console.error(error);
-    });
-
+    	}).on('error', function(error){
+        	console.error(error);
+    	});
 }
 
 var callAddress = createCall('createsession',true);
-var call = makeCall(callAddress);
+var sessionCall = makeCall(callAddress);
