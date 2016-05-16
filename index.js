@@ -1,40 +1,41 @@
 var md5 		= require('md5');
 var moment 		= require('moment');
-var http 		= require('http');
+var fs 			= require('fs');
+var request 	= require('request');
+var parser 		= require('JSONStream');
+var utcTime = moment().utc().format("YYYYMMDDHHmmss");
+var baseUri = 'http://api.smitegame.com/smiteapi.svc/';
+var sessionId;
 
 var Config = require("./config.json");
 
-function prepareCall(method, isSession) {
-	// Get the current time for the call
-	var utcTime = new moment().utc().format("YYYYMMDDHHmmss");
-	// Create the stupid hash
-	var authHash = md5(Config.devId + method + Config.authKey + utcTime);
-	if (isSession) {
-		//createsession[ResponseFormat]/{developerId}/{signature}/{timestamp}
-		var callAddress = Config.apiHost + method + Config.format + '/' + Config.devId + '/' + authHash + '/' + utcTime;
-	} else {
-		//getdataused[ResponseFormat]/{developerId}/{signature}/{session}/{timestamp}
-		var callAddress = Config.apiHost + method + Config.format + '/' + Config.devId + '/' + authHash + '/' + session + '/' + utcTime;
-	}
-	//console.log(callAddress);
-	return callAddress;
+try {
+    sessionId = fs.readFileSync("session.txt", "utf8");
+} catch (e) {
+    if (e.code === "ENOENT") {
+        sessionId = createSession(Config.devId, Config.authKey);
+    }
 }
 
-function fetchData(callAddress) {
-	http.get(callAddress, function(res){
-        var body = '';
-        res
-        	.on('data', function(chunk){
-            	body += chunk;
-            })
-            .on('end', function(){
-            	console.log(body);
-            });
-        
-    	}).on('error', function(error){
-        	console.error(error);
-    	});
+try {
+	player = getPlayer(Config.devId, Config.authKey, sessionId, 'joetheory');
+	console.log(player);
+
+} catch(e) {
+	console.log(e);
+}
+console.log(player);
+// Creates a Session Signature that will be used for
+// every call to the API
+function createSession(devId, authKey) {
+    var hash = md5(Config.devId + "createsession" + Config.authKey + utcTime)
+    request(baseUri + 'createsessionJson/' + Config.devId + '/' + hash + '/' + utcTime).pipe(parser.parse('session_id')).pipe(fs.createWriteStream('session.txt'));
 }
 
-var callAddress = prepareCall('createsession',true);
-var sessionCall = fetchData(callAddress);
+function getPlayer(devId, authKey, sessionId, playerName){
+    var hash = md5(devId + "getplayer" + authKey + utcTime)
+   	return request(baseUri + "getplayerjson/" + devId + '/' + hash + '/' + sessionId + '/' + utcTime + '/' + playerName).pipe(parser.parse("*")).pipe(parser.stringify()).pipe(fs.createWriteStream('player.json'));
+}
+
+exports.createSession = createSession;
+exports.getPlayer = getPlayer;
