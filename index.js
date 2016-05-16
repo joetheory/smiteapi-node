@@ -4,7 +4,7 @@ var http 		= require('http');
 
 var Config = require("./config.json");
 
-function createCall(method, isSession) {
+function prepareCall(method, isSession) {
 	// Get the current time for the call
 	var utcTime = new moment().utc().format("YYYYMMDDHHmmss");
 	// Create the stupid hash
@@ -20,7 +20,7 @@ function createCall(method, isSession) {
 	return callAddress;
 }
 
-function makeCall(callAddress) {
+function fetchData(callAddress) {
 	http.get(callAddress, function(res){
         var body = '';
         res
@@ -36,5 +36,5 @@ function makeCall(callAddress) {
     	});
 }
 
-var callAddress = createCall('createsession',true);
-var sessionCall = makeCall(callAddress);
+var callAddress = prepareCall('createsession',true);
+var sessionCall = fetchData(callAddress);
