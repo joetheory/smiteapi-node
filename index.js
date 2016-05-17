@@ -1,41 +1,42 @@
-var md5 		= require('md5');
-var moment 		= require('moment');
-var fs 			= require('fs');
-var request 	= require('request');
-var parser 		= require('JSONStream');
-var utcTime = moment().utc().format("YYYYMMDDHHmmss");
-var baseUri = 'http://api.smitegame.com/smiteapi.svc/';
-var sessionId;
-
+var md5 = require('md5');
+var moment = require('moment');
+var http = require('http');
+var parser = require('JSONStream');
 var Config = require("./config.json");
 
-try {
-    sessionId = fs.readFileSync("session.txt", "utf8");
-} catch (e) {
-    if (e.code === "ENOENT") {
-        sessionId = createSession(Config.devId, Config.authKey);
-    }
+genSession().then(function(data){console.log(data)})
+
+function genSession(options){
+
+    var devId = Config.devId;
+    var authKey = Config.authKey;
+    var utcTime = new moment().utc().format("YYYYMMDDHHmmss");
+    var authHash = md5(devId + "createsession" + authKey + utcTime);
+    var baseUrl = 'http://api.smitegame.com/smiteapi.svc/createsessionjson/';
+    var sessionUrl = baseUrl + devId + '/' + authHash + '/' + utcTime;
+
+    return new Promise(function(resolve, reject){
+        http.get(sessionUrl, function(res){
+        
+            if(200 !== res.statusCode){
+                reject(new Error(res.statusMessage));
+            }else{
+                var body = '';
+                res
+                    .on('data', function(chunk){
+                            body += chunk;
+                        }
+                    )
+                    .on('end', function(){
+                            resolve(body);
+                        }
+                    );
+            }
+        }).on('error', function(error){
+            console.error(error);
+            reject(new Error('error making API call: ' + error));//TODO: check if JSON
+        });
+    });
 }
 
-try {
-	player = getPlayer(Config.devId, Config.authKey, sessionId, 'joetheory');
-	console.log(player);
-
-} catch(e) {
-	console.log(e);
-}
-console.log(player);
-// Creates a Session Signature that will be used for
-// every call to the API
-function createSession(devId, authKey) {
-    var hash = md5(Config.devId + "createsession" + Config.authKey + utcTime)
-    request(baseUri + 'createsessionJson/' + Config.devId + '/' + hash + '/' + utcTime).pipe(parser.parse('session_id')).pipe(fs.createWriteStream('session.txt'));
-}
-
-function getPlayer(devId, authKey, sessionId, playerName){
-    var hash = md5(devId + "getplayer" + authKey + utcTime)
-   	return request(baseUri + "getplayerjson/" + devId + '/' + hash + '/' + sessionId + '/' + utcTime + '/' + playerName).pipe(parser.parse("*")).pipe(parser.stringify()).pipe(fs.createWriteStream('player.json'));
-}
-
-exports.createSession = createSession;
-exports.getPlayer = getPlayer;
+exports.genSession;
