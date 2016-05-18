@@ -2,9 +2,9 @@
   "name": "smiteapi-node",
   "version": "0.0.1",
   "description": "Node.js wrapper for Smite API",
-  "main": "index.js",
+  "main": "src/smiteapi-node.js",
   "scripts": {
-    "test": "test.js"
+    "test": "src/smiteapi-node.js"
   },
   "repository": {
     "type": "git",
